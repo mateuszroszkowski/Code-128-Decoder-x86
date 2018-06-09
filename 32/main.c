@@ -11,8 +11,8 @@ int decode(unsigned char* img);
 int main(int argc, char* argv[]) {
     char* buffer = NULL;
     int descriptor;
-    unsigned int width;
-    unsigned int height;
+    int width;
+    int height;
     unsigned short bpp;
     short signature;
     int result;
@@ -53,8 +53,8 @@ int main(int argc, char* argv[]) {
         return 5;
     }
 
-    width = *(unsigned int*)(buffer + 18);
-    height = *(unsigned int*)(buffer + 22);
+    width = *(int*)(buffer + 18);
+    height = *(int*)(buffer + 22);
     bpp =  *(unsigned short*)(buffer + 28);
     signature = *(short*)(buffer);
     if(bpp == 24 && width == 600 && height == 50) {
