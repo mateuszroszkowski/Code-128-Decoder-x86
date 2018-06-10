@@ -11,6 +11,8 @@ section .data:
             dd  0x6F6, 0x7B6, 0x578, 0x51E, 0x45E, 0x5E8, 0x5E2, 0x7A8, 0x7A2, 0x5DE,
             dd  0x5EE, 0x75E, 0x7AE, 0x684, 0x690, 0x69C, 0x18EB
 
+    msg:    db "The result = %d",10,0
+
     current_checksum    dw  0
     last_component      dw  0       ;character value * its number in order
     last_char_value     dw  0
@@ -19,15 +21,18 @@ section .data:
     black_address       dw  0
 
     %define     black_start [ebp-4]
+    %define     smallest_width [ebp-8]
 
 section .text:
 global  decode
-extern  puts
+extern  printf
 decode:
     push    ebp
     mov     ebp, esp
+    sub     esp, 4
 
     push    ebx
+    push    edx
     push    esi
     push    ecx
 
@@ -47,8 +52,8 @@ look_for_black:
     jmp     look_for_black
 
 black_found:
-    ;mov     black_start, esi
-    mov     [black_address], esi
+    mov     black_start, esi
+    ;mov     [black_address], esi
     ;mov     black_start, esi
     xor     ecx, ecx
     ;mov     eax, 2137
@@ -62,7 +67,12 @@ calculate_width:
     jmp     calculate_width
 
 width_found:
+    xor     edx, edx
     mov     eax, ecx
+    mov     ecx, 2
+    div     ecx
+    sub     esp, 8
+    mov     smallest_width, eax
     jmp     exit
 
 no_barcode:
@@ -71,6 +81,7 @@ no_barcode:
 exit:
     pop    ecx
     pop    esi
+    pop    edx
     pop    ebx
 
     mov    esp, ebp
