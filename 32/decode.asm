@@ -11,8 +11,8 @@ section .data:
             dd  0x6F6, 0x7B6, 0x578, 0x51E, 0x45E, 0x5E8, 0x5E2, 0x7A8, 0x7A2, 0x5DE,
             dd  0x5EE, 0x75E, 0x7AE, 0x684, 0x690, 0x69C, 0x18EB
 
-    bytes_in_row        dw  1800
-    lines_to_skip       dw  24      ;n+1 line will be read
+    max_skips           dw  599
+    bytes_to_skip       dw  43200   ;to read n+1 line
     smallest_bar_width  dw  0
 
     current_checksum    dw  0
@@ -22,9 +22,6 @@ section .data:
 
     possible_moves      dw  0       ;number of possile moves pixel by pixel before reaching end of the line
 
-    black_found_msg     db  "Black pixel found!",0
-    no_barcode_msg      db  "No barcode detexted!",0
-
 section .text:
 global  decode
 extern  puts
@@ -32,35 +29,37 @@ decode:
     push    ebp
     mov     ebp, esp
 
+    push    ebx
     push    esi
     push    ecx
-    push    edi
 
     mov     esi, [ebp+8]
     xor     ecx, ecx
 
+prepare:
+
+    add     esi, [bytes_to_skip]
+
 look_for_black:
     cmp     BYTE [esi], 0
     je      black_found
-    cmp     ecx, 599
+    cmp     ecx, [max_skips]
     je      no_barcode
     add     esi, 3
     inc     ecx
     jmp     look_for_black
 
 black_found:
-    mov     edi, black_found_msg
-    call    puts
+    mov     eax, 2137
     jmp     exit
 
 no_barcode:
-    mov     edi, no_barcode_msg
-    call    puts
+    mov     eax, 1488
 
 exit:
-    pop     edi
-    pop     ecx
-    pop     esi
+    pop    ecx
+    pop    esi
+    pop    ebx
 
     mov     esp, ebp
     pop     ebp
