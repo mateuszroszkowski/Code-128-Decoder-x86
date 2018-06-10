@@ -14,6 +14,7 @@ int main(int argc, char* argv[]) {
     int width;
     int height;
     unsigned short bpp;
+    size_t  bmp_size;
     short signature;
     int result;
 
@@ -56,15 +57,13 @@ int main(int argc, char* argv[]) {
     width = *(int*)(buffer + 18);
     height = *(int*)(buffer + 22);
     bpp =  *(unsigned short*)(buffer + 28);
+    bmp_size = *(size_t*)(buffer + 34);
     signature = *(short*)(buffer);
     if(bpp == 24 && width == 600 && height == 50) {
+        //fwrite(buffer+58, 1, bmp_size, stdout);
         result = decode(buffer + 54);
     }
     free(buffer);
     close(descriptor);
     return 0;
-}
-
-int decode(unsigned char* img) {
-    printf("placeholder\n");
 }
