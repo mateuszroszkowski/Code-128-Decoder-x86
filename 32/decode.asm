@@ -11,16 +11,14 @@ section .data:
             dd  0x6F6, 0x7B6, 0x578, 0x51E, 0x45E, 0x5E8, 0x5E2, 0x7A8, 0x7A2, 0x5DE,
             dd  0x5EE, 0x75E, 0x7AE, 0x684, 0x690, 0x69C, 0x18EB
 
-    max_skips           dw  599
-    bytes_to_skip       dw  43200   ;to read n+1 line
-    smallest_bar_width  dw  0
-
     current_checksum    dw  0
     last_component      dw  0       ;character value * its number in order
     last_char_value     dw  0
     current_char_number dw  0       ;number of characters already decoded from the barcode
 
-    possible_moves      dw  0       ;number of possile moves pixel by pixel before reaching end of the line
+    black_address       dw  0
+
+    %define     black_start [ebp-4]
 
 section .text:
 global  decode
@@ -37,20 +35,34 @@ decode:
     xor     ecx, ecx
 
 prepare:
-
-    add     esi, bytes_to_skip
-
+    add     esi, 43200
 look_for_black:
     cmp     BYTE [esi], 0
     je      black_found
-    cmp     ecx, max_skips
+    cmp     ecx, 599
+    ;cmp     ecx, max_skips
     je      no_barcode
     add     esi, 3
     inc     ecx
     jmp     look_for_black
 
 black_found:
-    mov     eax, 2137
+    ;mov     black_start, esi
+    mov     [black_address], esi
+    ;mov     black_start, esi
+    xor     ecx, ecx
+    ;mov     eax, 2137
+    ;jmp     exit
+
+calculate_width:
+    cmp     BYTE [esi], 0
+    jne     width_found
+    inc     ecx
+    add     esi, 3
+    jmp     calculate_width
+
+width_found:
+    mov     eax, ecx
     jmp     exit
 
 no_barcode:
@@ -61,6 +73,6 @@ exit:
     pop    esi
     pop    ebx
 
-    mov     esp, ebp
-    pop     ebp
+    mov    esp, ebp
+    pop    ebp
     ret
