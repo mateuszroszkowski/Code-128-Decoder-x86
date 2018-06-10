@@ -38,12 +38,12 @@ decode:
 
 prepare:
 
-    add     esi, [bytes_to_skip]
+    add     esi, bytes_to_skip
 
 look_for_black:
     cmp     BYTE [esi], 0
     je      black_found
-    cmp     ecx, [max_skips]
+    cmp     ecx, max_skips
     je      no_barcode
     add     esi, 3
     inc     ecx

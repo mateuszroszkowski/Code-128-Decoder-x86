@@ -62,6 +62,7 @@ int main(int argc, char* argv[]) {
     if(bpp == 24 && width == 600 && height == 50) {
         //fwrite(buffer+58, 1, bmp_size, stdout);
         result = decode(buffer + 54);
+        printf("%d", result);
     }
     free(buffer);
     close(descriptor);

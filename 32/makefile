@@ -1,6 +1,6 @@
 CC=cc
 ASMBIN=nasm
-all: asm cc link clean
+all : asm cc link clean
 asm :
 	$(ASMBIN) -f elf decode.asm
 cc :
