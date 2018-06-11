@@ -22,6 +22,8 @@ section .data:
 
     %define     black_start [ebp-4]
     %define     smallest_width [ebp-8]
+    %define     output [ebp-12]
+    %define     line_to_read [ebp-16]
 
 section .text:
 global  decode
@@ -29,7 +31,7 @@ extern  printf
 decode:
     push    ebp
     mov     ebp, esp
-    sub     esp, 8
+    sub     esp, 16
 
     push    ebx
     push    edx
@@ -37,6 +39,13 @@ decode:
     push    ecx
 
     mov     esi, [ebp+8]
+    mov     eax, [ebp+12]
+    mov     eax, [eax]
+    mov     line_to_read, eax
+    cmp     DWORD [eax], 15
+    je      no_barcode
+    mov     eax, [ebp+16]
+    mov     output, eax
     xor     ecx, ecx
 
 prepare:
