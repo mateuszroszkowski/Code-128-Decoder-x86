@@ -29,7 +29,7 @@ extern  printf
 decode:
     push    ebp
     mov     ebp, esp
-    sub     esp, 4
+    sub     esp, 8
 
     push    ebx
     push    edx
@@ -71,7 +71,6 @@ width_found:
     mov     eax, ecx
     mov     ecx, 2
     div     ecx
-    sub     esp, 8
     mov     smallest_width, eax
     jmp     exit
 

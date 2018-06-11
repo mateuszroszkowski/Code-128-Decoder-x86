@@ -6,7 +6,7 @@
 
 #define BMP_SIGNATURE 0x4d42
 
-int decode(unsigned char* img, unsigned int scan_line_no, char* text);
+int decode(unsigned char* img, int scan_line_no, char* text);
 
 int main(int argc, char* argv[]) {
     char* buffer = NULL;
@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     size_t  bmp_size;
     short signature;
     int result;
-
+    int line;
 
     if(argc != 3) {
         fprintf(stderr, "Incorrect number of arguments.\n");
@@ -58,11 +58,12 @@ int main(int argc, char* argv[]) {
     height = *(int*)(buffer + 22);
     bpp =  *(unsigned short*)(buffer + 28);
     bmp_size = *(size_t*)(buffer + 34);
-    signature = *(short*)(buffer);
+
     if(bpp == 24 && width == 600 && height == 50) {
         //fwrite(buffer+58, 1, bmp_size, stdout);
+        line = atoi(argv[2]);
         char output[100];
-        result = decode(buffer + 54, argv[2], output);
+        result = decode(buffer + 54, (int)argv[2], output);
         printf("%d", result);
     }
     free(buffer);
