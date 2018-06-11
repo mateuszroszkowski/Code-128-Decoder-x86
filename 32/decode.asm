@@ -39,11 +39,11 @@ decode:
     push    ecx
 
     mov     esi, [ebp+8]
+    ; mov     eax, [ebp+12]
     mov     eax, [ebp+12]
-    mov     eax, [eax]
-    mov     line_to_read, eax
-    cmp     DWORD [eax], 15
-    je      no_barcode
+    mov     ebx, [eax]
+    mov     eax, ebx     
+    jmp     exit
     mov     eax, [ebp+16]
     mov     output, eax
     xor     ecx, ecx
