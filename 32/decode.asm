@@ -194,7 +194,7 @@ possible_stop:
     mov     eax, [edi]
     cmp     eax, 'I'
     mov     eax, 31719
-    mov     BYTE [edi], '\0'
+    mov     BYTE [edi], 0
     mov     eax, 1337
     jmp     exit
 

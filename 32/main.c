@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         printf("%d\n", line);
         char output[100];
         result = decode(buffer + 54, line, output);
-        printf("%d\n", output);
+        printf("%s\n", output);
         printf("%d\n", result);
     }
     free(buffer);
