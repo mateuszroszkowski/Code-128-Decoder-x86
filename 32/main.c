@@ -64,8 +64,9 @@ int main(int argc, char* argv[]) {
         line = atoi(argv[2]);
         printf("%d\n", line);
         char output[100];
-        result = decode(buffer + 54, (int)argv[2], output);
-        printf("%d", result);
+        result = decode(buffer + 54, line, output);
+        printf("%d\n", output);
+        printf("%d\n", result);
     }
     free(buffer);
     close(descriptor);

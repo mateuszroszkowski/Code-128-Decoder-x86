@@ -10,20 +10,24 @@ section .data:
             dd  0x53C, 0x4BC, 0x49E, 0x5E4, 0x4F4, 0x4F2, 0x7A4, 0x794, 0x792, 0x6DE,
             dd  0x6F6, 0x7B6, 0x578, 0x51E, 0x45E, 0x5E8, 0x5E2, 0x7A8, 0x7A2, 0x5DE,
             dd  0x5EE, 0x75E, 0x7AE, 0x684, 0x690, 0x69C, 0x18EB
+    
 
-    msg:    db "The result = %d",10,0
+    %define     black_start             [ebp-4]
+    %define     smallest_width          [ebp-8]
+    %define     output                  [ebp-12]
+    %define     line_to_read            [ebp-16]
+    %define     bytes_to_skip           [ebp-20]
+    %define     pattern                 [ebp-24]
+    %define     number_of_shifts        [ebp-28]
+    %define     current_color           [ebp-32]
 
-    current_checksum    dw  0
-    last_component      dw  0       ;character value * its number in order
-    last_char_value     dw  0
-    current_char_number dw  0       ;number of characters already decoded from the barcode
+    %define     char_counter            [ebp-36]
+    %define     last_char_value         [ebp-40]
+    %define     last_checksum_component [ebp-44]
+    %define     current_checksum        [ebp-48]
 
-    black_address       dw  0
+    %define     address_holder          [ebp-52]
 
-    %define     black_start [ebp-4]
-    %define     smallest_width [ebp-8]
-    %define     output [ebp-12]
-    %define     line_to_read [ebp-16]
 
 section .text:
 global  decode
@@ -31,30 +35,38 @@ extern  printf
 decode:
     push    ebp
     mov     ebp, esp
-    sub     esp, 16
+    sub     esp, 52
 
-    push    ebx
-    push    edx
-    push    esi
     push    ecx
+    push    ebx
+    ;push    edx
+    push    esi
+    push    edi
+
+    xor     eax, eax
+    mov     char_counter, eax
+    mov     last_char_value, eax
+    mov     last_checksum_component, eax
+    mov     current_checksum, eax
+    mov     address_holder, eax
 
     mov     esi, [ebp+8]
-    ; mov     eax, [ebp+12]
     mov     eax, [ebp+12]
-    mov     ebx, [eax]
-    mov     eax, ebx     
-    jmp     exit
+    mov     line_to_read, eax
     mov     eax, [ebp+16]
     mov     output, eax
     xor     ecx, ecx
 
 prepare:
-    add     esi, 43200
+    mov     ebx, line_to_read
+    mov     eax, 1800
+    mul     ebx
+    mov     bytes_to_skip, eax
+    add     esi, bytes_to_skip
 look_for_black:
     cmp     BYTE [esi], 0
     je      black_found
     cmp     ecx, 599
-    ;cmp     ecx, max_skips
     je      no_barcode
     add     esi, 3
     inc     ecx
@@ -62,11 +74,7 @@ look_for_black:
 
 black_found:
     mov     black_start, esi
-    ;mov     [black_address], esi
-    ;mov     black_start, esi
     xor     ecx, ecx
-    ;mov     eax, 2137
-    ;jmp     exit
 
 calculate_width:
     cmp     BYTE [esi], 0
@@ -76,21 +84,133 @@ calculate_width:
     jmp     calculate_width
 
 width_found:
-    xor     edx, edx
     mov     eax, ecx
     mov     ecx, 2
     div     ecx
     mov     smallest_width, eax
+    mov     esi, black_start
+
+pre_prepare:
+    xor     eax, eax
+    mov     pattern, eax
+    mov     number_of_shifts, eax
+
+prepare_bar_reading:
+    xor     ecx, ecx
+    mov     eax, DWORD [esi]
+    mov     current_color, eax
+
+get_bar:
+    mov     eax, DWORD [esi]
+    inc     ecx
+    add     esi, 3
+    cmp     ecx, smallest_width
+    je      bar_obtained
+    jmp     get_bar
+
+bar_obtained:
+    mov     eax, current_color
+    cmp     eax, 0x00000000
+    je      black_bar
+
+white_bar:
+    mov     eax, pattern
+    or      eax, 0
+    mov     pattern, eax
+    mov     eax, number_of_shifts
+    inc     eax
+    cmp     eax, 11
+    je      pattern_finished    ;todo: change to pattern finished
+    mov     number_of_shifts, eax
+    mov     eax, pattern
+    shl      eax, 1
+    mov     pattern, eax
+    jmp     prepare_bar_reading
+
+black_bar:
+    mov     eax, pattern
+    or      eax, 1
+    mov     pattern, eax
+    mov     eax, number_of_shifts
+    inc     eax
+    cmp     eax, 11
+    je      pattern_finished    ;todo: change to pattern finished
+    mov     number_of_shifts, eax
+    mov     eax, pattern
+    shl     eax, 1
+    mov     pattern, eax
+    jmp     prepare_bar_reading
+
+pattern_finished:
+    mov     number_of_shifts, eax
+    mov     eax, pattern
+    mov     address_holder, esi
+    xor     ecx, ecx
+    mov     esi, codes
+
+compare:
+    mov     ebx, [esi + ecx * 4]
+    cmp     eax, ebx
+    je      equal
+
+not_equal:
+    inc     ecx
+    cmp     ecx, 106
+    je      possible_stop
+    jmp     compare
+
+equal:
+    cmp     ecx, 103
+    je      start
+    cmp     ecx, 104
+    je      wrong_set
+    cmp     ecx, 105
+    je      wrong_set
+    mov     eax, char_counter
+    inc     eax
+    mov     char_counter, eax
+    mov     last_char_value, ecx
+    mul     ecx
+    mov     last_checksum_component, eax
+    add     eax, current_checksum
+    mov     current_checksum, eax
+    mov     eax, last_char_value
+    add     eax, 32
+    mov     edi, output
+    mov     [edi], eax
+    inc     edi
+    mov     output, edi
+    mov     esi, address_holder
+    jmp     pre_prepare
+
+start:
+    mov     current_checksum, ecx
+    mov     esi, address_holder
+    jmp     pre_prepare
+
+possible_stop:
+    mov     edi, output
+    dec     edi
+    mov     eax, [edi]
+    cmp     eax, 'I'
+    mov     eax, 31719
+    mov     BYTE [edi], '\0'
+    mov     eax, 1337
+    jmp     exit
+
+wrong_set:
+    mov     eax, 7331
     jmp     exit
 
 no_barcode:
     mov     eax, 1488
 
 exit:
-    pop    ecx
+    pop    edi
     pop    esi
-    pop    edx
+    ;pop    edx
     pop    ebx
+    pop    ecx
 
     mov    esp, ebp
     pop    ebp
