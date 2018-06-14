@@ -6,7 +6,15 @@
 
 #define BMP_SIGNATURE 0x4d42
 
+#define SUCCESS         0x00000000
+#define NO_BARCODE      0x00000001
+#define TOO_WIDE_BAR    0x00000002
+#define WRONG_SET       0x00000003
+#define WRONG_CHECKSUM  0x00000004
+#define WRONG_CODE      0x00000005
+
 int decode(unsigned char* img, int scan_line_no, char* text);
+void eval_error(int err);
 
 int main(int argc, char* argv[]) {
     char* buffer = NULL;
@@ -29,7 +37,7 @@ int main(int argc, char* argv[]) {
 
     buffer = (char*)malloc(bmp.st_size);
     if(buffer == NULL) {
-        fprintf(stderr, "Cannot allocate memory. Check name of the file.\n");
+        fprintf(stderr, "Cannot allocate memory. Check name of the file and/or cli args order.\n");
         return 2;
     }
 
@@ -60,15 +68,45 @@ int main(int argc, char* argv[]) {
     bmp_size = *(size_t*)(buffer + 34);
 
     if(bpp == 24 && width == 600 && height == 50) {
-        //fwrite(buffer+58, 1, bmp_size, stdout);
         line = atoi(argv[2]);
-        printf("%d\n", line);
-        char output[100];
-        result = decode(buffer + 54, line, output);
-        printf("%s\n", output);
-        printf("%d\n", result);
+        if(line >= 0 && line <= 49) {
+            printf("Chosen line number:\t%d\n", line);
+            char output[100];
+            result = decode(buffer + 54, line, output);
+            if(result == 0) {
+                printf("Decoded text:\t\t%s\n", output);
+            }
+            else {
+                eval_error(result);
+            }
+        }
+        else {
+            fprintf(stderr, "Line number must fit interval [0;49]\n");
+        }
     }
     free(buffer);
     close(descriptor);
     return 0;
+}
+
+void eval_error(int err) {
+    switch(err) {
+        case NO_BARCODE:
+            fprintf(stderr, "No barcode found in the bitmap!");
+            break;
+        case TOO_WIDE_BAR:
+            fprintf(stderr, "Width of black bar exceeded limit. No barcode would fit!");
+            break;
+        case WRONG_SET:
+            fprintf(stderr, "Character starting the set B or C detected!");
+            break;
+        case WRONG_CHECKSUM:
+            fprintf(stderr, "Wrong checksum value!");
+            break;
+        case WRONG_CODE:
+            fprintf(stderr, "Unknown character detected!");
+            break;
+        default:
+            fprintf(stderr, "Unknown error detected!");
+    }
 }

@@ -80,6 +80,8 @@ calculate_width:
     cmp     BYTE [esi], 0
     jne     width_found
     inc     ecx
+    cmp     ecx, 20
+    je      too_wide
     add     esi, 3
     jmp     calculate_width
 
@@ -189,21 +191,104 @@ start:
     jmp     pre_prepare
 
 possible_stop:
-    mov     edi, output
-    dec     edi
-    mov     eax, [edi]
-    cmp     eax, 'I'
-    mov     eax, 31719
-    mov     BYTE [edi], 0
-    mov     eax, 1337
+    ; mov     edi, output
+    ; dec     edi
+    ; mov     eax, [edi]
+    ; cmp     eax, 'I'
+    ; mov     eax, 31719
+    ; mov     BYTE [edi], 0
+    ; mov     eax, 1337
+    ; jmp     exit
+    xor     eax, eax
+    mov     number_of_shifts, eax
+    mov     esi, address_holder
+
+get_bars:
+    mov     eax, DWORD [esi]
+    mov     current_color, eax
+    xor     ecx, ecx
+
+get_additional_bar:
+    mov     eax, DWORD [esi]
+    inc     ecx
+    add     esi, 3
+    cmp     ecx, smallest_width
+    je      additional_bar_obtained
+    jmp     get_additional_bar
+
+additional_bar_obtained:
+    mov     eax, current_color
+    cmp     eax, 0x00000000
+    je      black_bar_obtained
+
+white_bar_obtained:
+    mov     eax, pattern
+    shl     eax, 1
+    or      eax, 0
+    mov     pattern, eax
+    mov     eax, number_of_shifts
+    inc     eax
+    cmp     eax, 2
+    je      finalize
+    mov     number_of_shifts, eax
+    jmp     get_bars
+
+black_bar_obtained:
+    mov     eax, pattern
+    shl     eax, 1
+    or      eax, 1
+    mov     pattern, eax
+    mov     eax, number_of_shifts
+    inc     eax
+    cmp     eax, 2
+    je      finalize
+    mov     number_of_shifts, eax
+    jmp     get_bars
+
+finalize:
+    mov     address_holder, esi
+    mov     esi, codes
+    mov     ecx, 106
+    mov     ebx, [esi + ecx * 4]
+    mov     eax, pattern
+    cmp     eax, ebx
+    je      match
+;wrong code here
+
+wrong_code:
+    mov     eax, 5
+    jmp     exit
+
+match:
+    mov     eax, current_checksum
+    mov     ebx, last_checksum_component
+    sub     eax, ebx
+    mov     ebx, 103
+    div     ebx
+    cmp     edx, last_char_value
+    je      exit_succes
+
+wrong_checksum:
+    mov     eax, 4
+    jmp     exit
+
+too_wide:
+    mov     eax, 2
     jmp     exit
 
 wrong_set:
-    mov     eax, 7331
+    mov     eax, 3
     jmp     exit
 
 no_barcode:
-    mov     eax, 1488
+    mov     eax, 1
+    jmp     exit
+
+exit_succes:
+    mov     edi, output
+    dec     edi
+    mov     BYTE [edi], 0
+    mov     eax, 0
 
 exit:
     pop    edi
