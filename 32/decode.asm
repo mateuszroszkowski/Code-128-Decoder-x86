@@ -63,6 +63,8 @@ prepare:
     mul     ebx
     mov     bytes_to_skip, eax
     add     esi, bytes_to_skip
+
+;looking for the first occurence of the black pixel in a specified row    
 look_for_black:
     cmp     BYTE [esi], 0
     je      black_found
@@ -72,10 +74,12 @@ look_for_black:
     inc     ecx
     jmp     look_for_black
 
+;we store addres of a first black pixel 
 black_found:
     mov     black_start, esi
     xor     ecx, ecx
 
+;we check the width of the first bar to calculate it's relative width (refering to the narrowest bar in the set)
 calculate_width:
     cmp     BYTE [esi], 0
     jne     width_found
@@ -102,6 +106,7 @@ prepare_bar_reading:
     movzx   eax, BYTE [esi]
     mov     current_color, eax
 
+;reading bar = smallest width of the bar in set
 get_bar:
     movzx   eax, BYTE [esi]
     inc     ecx
@@ -115,6 +120,7 @@ bar_obtained:
     cmp     eax, 0x00000000
     je      black_bar
 
+;if color == black we do current_pattern | 1, else current_pattern_ | 0, we do like this 11 times to get full patern
 white_bar:
     mov     eax, pattern
     or      eax, 0
@@ -150,6 +156,7 @@ pattern_finished:
     xor     ecx, ecx
     mov     esi, codes
 
+;after we do 11 logical operations, we look at the array if our pattern is present 
 compare:
     mov     ebx, [esi + ecx * 4]
     cmp     eax, ebx
@@ -190,19 +197,13 @@ start:
     mov     esi, address_holder
     jmp     pre_prepare
 
+;if not, we assume that our pattern may be stop code (only one which need 2 additional bits (13 summary) to be encoded)
 possible_stop:
-    ; mov     edi, output
-    ; dec     edi
-    ; mov     eax, [edi]
-    ; cmp     eax, 'I'
-    ; mov     eax, 31719
-    ; mov     BYTE [edi], 0
-    ; mov     eax, 1337
-    ; jmp     exit
     xor     eax, eax
     mov     number_of_shifts, eax
     mov     esi, address_holder
 
+;we get 2 additional bars
 get_bars:
     movzx   eax, BYTE [esi]
     mov     current_color, eax
@@ -245,6 +246,7 @@ black_bar_obtained:
     mov     number_of_shifts, eax
     jmp     get_bars
 
+;if after getting 2 additional bars our pattern doesn't match stop code, we assume error - wrong code
 finalize:
     mov     address_holder, esi
     mov     esi, codes
@@ -253,12 +255,17 @@ finalize:
     mov     eax, pattern
     cmp     eax, ebx
     je      match
-;wrong code here
 
 wrong_code:
     mov     eax, 5
     jmp     exit
 
+;else, we check if stop - 1 character (checksum value) was encoded correctly
+;to do so, we assume 1 char before stop is actual checksum
+;we manualy calculate sum of all other characters * their position in the sequence
+;we perform obtained_sum % 103
+;if out outcome == checksum_value, we validate encoding and printf outcome
+;else we assume error - wrong checksum value
 match:
     mov     eax, current_checksum
     mov     ebx, last_checksum_component
