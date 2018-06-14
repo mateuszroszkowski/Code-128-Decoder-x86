@@ -120,7 +120,7 @@ bar_obtained:
     cmp     eax, 0x00000000
     je      black_bar
 
-;if color == black we do current_pattern | 1, else current_pattern_ | 0, we do like this 11 times to get full patern
+;if color == black we do current_pattern | 1, else current_pattern_ | 0 and then shift to the left. We do like this 11 (10 shifts) times to get full patern
 white_bar:
     mov     eax, pattern
     or      eax, 0
