@@ -99,11 +99,11 @@ pre_prepare:
 
 prepare_bar_reading:
     xor     ecx, ecx
-    mov     eax, DWORD [esi]
+    movzx   eax, BYTE [esi]
     mov     current_color, eax
 
 get_bar:
-    mov     eax, DWORD [esi]
+    movzx   eax, BYTE [esi]
     inc     ecx
     add     esi, 3
     cmp     ecx, smallest_width
@@ -204,12 +204,12 @@ possible_stop:
     mov     esi, address_holder
 
 get_bars:
-    mov     eax, DWORD [esi]
+    movzx   eax, BYTE [esi]
     mov     current_color, eax
     xor     ecx, ecx
 
 get_additional_bar:
-    mov     eax, DWORD [esi]
+    movzx   eax, BYTE [esi]
     inc     ecx
     add     esi, 3
     cmp     ecx, smallest_width

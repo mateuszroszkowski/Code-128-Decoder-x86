@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
     short signature;
     int result;
     int line;
+    unsigned int data_offset;
 
     if(argc != 3) {
         fprintf(stderr, "Incorrect number of arguments.\n");
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
     width = *(int*)(buffer + 18);
     height = *(int*)(buffer + 22);
     bpp =  *(unsigned short*)(buffer + 28);
+    data_offset = *(unsigned int*)(buffer + 10);
     bmp_size = *(size_t*)(buffer + 34);
 
     if(bpp == 24 && width == 600 && height == 50) {
@@ -72,7 +74,7 @@ int main(int argc, char* argv[]) {
         if(line >= 0 && line <= 49) {
             printf("Chosen line number:\t%d\n", line);
             char output[100];
-            result = decode(buffer + 54, line, output);
+            result = decode(buffer + data_offset, line, output);
             if(result == 0) {
                 printf("Decoded text:\t\t%s\n", output);
             }
